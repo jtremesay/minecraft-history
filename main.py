@@ -15,9 +15,12 @@ app = Bottle()
 
 if redis:
     redis_connetion = redis.StrictRedis(host='localhost', port=6379, db=0)
+    try:
+        redis_connetion.ping()
+    except redis.exceptions.ConnectionError:
+        redis_connetion = None
 else:
     redis_connetion = None
-
 
 def memoize(cache_key):
     def decorator(func):
