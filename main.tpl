@@ -13,23 +13,27 @@
         </form>
 
         % if user_infos is not None:
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Pseudo</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    % for user_info in user_infos:
+            % if not user_infos:
+                <p>No history found for player {{ user }}.</p>
+            % else:
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ user_info['date'] }}</td>
-                            <td>{{ user_info['pseudo'] }}</td>
+                            <th>Date</th>
+                            <th>Pseudo</th>
                         </tr>
-                    % end
-                </tbody>
-            </table>
+                    </thead>
+
+                    <tbody>
+                        % for user_info in user_infos:
+                            <tr>
+                                <td>{{ user_info['date'] }}</td>
+                                <td>{{ user_info['pseudo'] }}</td>
+                            </tr>
+                        % end
+                    </tbody>
+                </table>
+            % end
         % end
         <p>Thank you for not abusing this service.</p>
     </body>
