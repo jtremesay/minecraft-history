@@ -22,7 +22,8 @@ if redis:
 else:
     redis_connetion = None
 
-def memoize(cache_key):
+
+def memoize(cache_key, duration=None):
     def decorator(func):
         def inner(key):
             value = None
@@ -37,6 +38,8 @@ def memoize(cache_key):
 
                 if redis_connetion:
                     redis_connetion.set(redis_key, pickle.dumps(value))
+                    if duration:
+                        redis_connetion.expires(redis_key, duration)
 
             return value
 
