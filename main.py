@@ -91,4 +91,4 @@ def greet():
 
     return template('main', user=user_pseudo, user_infos=user_infos)
 
-run(app, host='localhost', port=8080, debug=True)
+run(app, server='gunicorn', host='127.0.0.1', port=5000, debug=True)
