@@ -52,6 +52,3 @@ def greet():
     return template('main', user=user_pseudo, user_infos=user_infos)
 
 run(app, host='localhost', port=8080, debug=True)
-#import pprint
-#user_infos = get_user_infos('ceddatif')
-#pprint.pprint(user_infos)
