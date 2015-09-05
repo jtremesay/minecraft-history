@@ -27,24 +27,52 @@ def get_redis_connection(host, port, db):
     except redis.exceptions.ConnectionError:
         connection = None
 
+    return connection
 
-def memoize(cache_key, duration=None):
+
+def get_redis_key(prefix, key):
+    return '{0}_{1}_{2}'.format(REDIS_KEY_PREFIX, prefix, key)
+
+
+def redis_get(prefix, key):
+    redis_key = get_redis_key(prefix, key)
+    value_serialized = redis_connection.get(redis_key)
+    if value_serialized is None:
+        raise KeyError
+
+    value = pickle.loads(value_serialized)
+
+    return value
+
+
+def redis_set(prefix, key, value, duration):
+    value_serialized = pickle.dumps(value)
+    redis_key = get_redis_key(prefix, key)
+    redis_connection.set(redis_key, value_serialized)
+    if duration:
+        redis_connection.expire(redis_key, duration)
+
+
+def memoize(prefix, duration=None):
     def decorator(func):
         def inner(key):
-            value = None
             if redis_connection:
-                redis_key = 'minecraft_history_{0}_{1}'.format(cache_key, key)
-                value = redis_connection.get(redis_key)
-                if value:
-                    value = pickle.loads(value)
+                try:
+                    value = redis_get(prefix, key)
+                except KeyError:
+                    value = None
+                    value_found = False
+                else:
+                    value_found = True
+            else:
+                value = None
+                value_found = False
 
-            if value is None:
+            if not value_found:
                 value = func(key)
 
                 if redis_connection:
-                    redis_connection.set(redis_key, pickle.dumps(value))
-                    if duration:
-                        redis_connection.expires(redis_key, duration)
+                    redis_set(prefix, key, value, duration)
 
             return value
 
