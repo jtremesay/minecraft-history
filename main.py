@@ -11,41 +11,52 @@ except ImportError:
 else:
     import pickle
 
+USE_REDIS = True
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0
+REDIS_KEY_PREFIX = 'minecraft_history'
+
 app = Bottle()
 
-if redis:
-    redis_connetion = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+def get_redis_connection(host, port, db):
+    connection = redis.StrictRedis(host=host, port=port, db=db)
     try:
-        redis_connetion.ping()
+        connection.ping()
     except redis.exceptions.ConnectionError:
-        redis_connetion = None
-else:
-    redis_connetion = None
+        connection = None
 
 
 def memoize(cache_key, duration=None):
     def decorator(func):
         def inner(key):
             value = None
-            if redis_connetion:
+            if redis_connection:
                 redis_key = 'minecraft_history_{0}_{1}'.format(cache_key, key)
-                value = redis_connetion.get(redis_key)
+                value = redis_connection.get(redis_key)
                 if value:
                     value = pickle.loads(value)
 
             if value is None:
                 value = func(key)
 
-                if redis_connetion:
-                    redis_connetion.set(redis_key, pickle.dumps(value))
+                if redis_connection:
+                    redis_connection.set(redis_key, pickle.dumps(value))
                     if duration:
-                        redis_connetion.expires(redis_key, duration)
+                        redis_connection.expires(redis_key, duration)
 
             return value
 
         return inner
 
     return decorator
+
+
+if redis and USE_REDIS:
+    redis_connection = get_redis_connection(REDIS_HOST, REDIS_PORT, REDIS_DB)
+else:
+    redis_connection = None
 
 
 @memoize('user_id')
