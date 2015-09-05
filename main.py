@@ -4,9 +4,48 @@ import arrow
 from bottle import Bottle, request, run, template
 import requests
 
+try:
+    import redis
+except ImportError:
+    redis = None
+else:
+    import pickle
+
 app = Bottle()
 
+if redis:
+    redis_connetion = redis.StrictRedis(host='localhost', port=6379, db=0)
+else:
+    redis_connetion = None
 
+
+def memoize(cache_key):
+    def decorator(func):
+        def inner(key):
+            value = None
+            if redis_connetion:
+                redis_key = 'minecraft_history_{0}_{1}'.format(cache_key, key)
+                value = redis_connetion.get(redis_key)
+                if value:
+                    value = pickle.loads(value)
+                print('get {0} -> {1} ({2})'.format(redis_key, value, type(value)))
+
+
+            if value is None:
+                value = func(key)
+
+                if redis_connetion:
+                    print('set {0} with value {1} ({2})'.format(redis_key, value, type(value)))
+                    redis_connetion.set(redis_key, pickle.dumps(value))
+
+            return value
+
+        return inner
+
+    return decorator
+
+
+@memoize('user_id')
 def get_user_id(user_pseudo):
     response = requests.get('https://api.mojang.com/users/profiles/minecraft/{0}'.format(user_pseudo))
     try:
@@ -17,6 +56,7 @@ def get_user_id(user_pseudo):
     return user_id
 
 
+@memoize('user_names')
 def get_user_names(user_id):
     response = requests.get('https://api.mojang.com/user/profiles/{0}/names'.format(user_id))
     try:
