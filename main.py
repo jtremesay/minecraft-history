@@ -59,7 +59,7 @@ else:
     redis_connection = None
 
 
-@memoize('user_id')
+@memoize('user_id', 3600)
 def get_user_id(user_pseudo):
     response = requests.get('https://api.mojang.com/users/profiles/minecraft/{0}'.format(user_pseudo))
     try:
@@ -70,7 +70,7 @@ def get_user_id(user_pseudo):
     return user_id
 
 
-@memoize('user_names')
+@memoize('user_names', 3600)
 def get_user_names(user_id):
     response = requests.get('https://api.mojang.com/user/profiles/{0}/names'.format(user_id))
     try:
