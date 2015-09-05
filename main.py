@@ -31,14 +31,11 @@ def memoize(cache_key):
                 value = redis_connetion.get(redis_key)
                 if value:
                     value = pickle.loads(value)
-                print('get {0} -> {1} ({2})'.format(redis_key, value, type(value)))
-
 
             if value is None:
                 value = func(key)
 
                 if redis_connetion:
-                    print('set {0} with value {1} ({2})'.format(redis_key, value, type(value)))
                     redis_connetion.set(redis_key, pickle.dumps(value))
 
             return value
